@@ -1,13 +1,13 @@
 # Pressure Solve Benchmark
 
 Benchmarks each implemented iterative method to solve Poisson equation
-$$
+```math
 \nabla^2 p = 0
-$$
+```
 with Neumann boundary condition
-$$
+```math
 \frac{\partial p}{\partial n} = 0.
-$$
+```
 
 ## Instructions
 
