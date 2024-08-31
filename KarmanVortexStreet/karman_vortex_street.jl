@@ -77,7 +77,7 @@ function main()
     for i = 1:6
         for j = 1:2
             planeData[j, i] *= 0.5L[j]
-            circleData[j, i] *= 1.2
+            circleData[j, i] *= 1.15
             circleData[j, i] += CirclePos[j] - 0.5L[j]
         end
     end
@@ -189,10 +189,10 @@ function main()
     fpsDisplayUpdateTime = 0.25
     fpsDisplayElapsed = 0
 
-    maximumTimestep = 1 / 30
+    maximumTimestep = 1 / 20
 
 
-    sourceAmount = 0.4
+    sourceAmount = 0.8
 
     shouldRun = true
 

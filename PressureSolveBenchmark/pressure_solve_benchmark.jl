@@ -103,7 +103,7 @@ printstyled("\n\nPRESSURE SOLVE BENCHMARK\n\n\n", bold=true, color=:light_magent
 # Gauss-Seidel Benchmark
 
 printstyled("Gauss-Seidel Method:\n\n", bold=true, color=:light_yellow)
-b1 = @benchmark gaussSeidel_bench($(fluid), $(v_div), MaxSolveIterations)
+b1 = @benchmark gaussSeidel_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
 println("Residual norm: $(gaussSeidel_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
 show(stdout, MIME("text/plain"), b1)
 println("\n\n")
@@ -112,7 +112,7 @@ println("\n\n")
 # Jacobi Benchmark
 
 printstyled("Jacobi Method:\n\n", bold=true, color=:light_yellow)
-b2 = @benchmark jacobi_bench($(fluid), $(v_div), MaxSolveIterations)
+b2 = @benchmark jacobi_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
 println("Residual norm: $(jacobi_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
 show(stdout, MIME("text/plain"), b2)
 println("\n\n")
@@ -120,13 +120,13 @@ println("\n\n")
 
 
 printstyled("Conjugate Gradient Method:\n\n", bold=true, color=:light_yellow)
-b3 = @benchmark conjugateGradient_bench($(fluid), $(v_div), MaxSolveIterations)
+b3 = @benchmark conjugateGradient_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
 println("Residual norm: $(conjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
 show(stdout, MIME("text/plain"), b3)
 println("\n\n")
 
 printstyled("Preconditioned Conjugate Gradient Method:\n\n", bold=true, color=:light_yellow)
-b4 = @benchmark preconditionedConjugateGradient_bench($(fluid), v_div, MaxSolveIterations)
+b4 = @benchmark preconditionedConjugateGradient_bench($(fluid), v_div, MaxSolveIterations) seconds=20
 println("Residual norm: $(preconditionedConjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
 show(stdout, MIME("text/plain"), b4)
 println("\n")
