@@ -21,7 +21,12 @@ void main()
         return;
     }
 
-    FragCd = vec4(vec3(sqrt(density)), 1.0);
+    FragCd = vec4(
+        vec3(
+            sqrt(min(density, 1))
+        ), 
+        1.0
+    );
     //FragCd = vec4(vec3(-densityTexture.g), 1.0);
     //FragCd = vec4(vec3(vel.x*vel.x+vel.y*vel.y)*0.2, 1.0);
     //FragCd = vec4(mix(vec3(0, 1, 0), vec3(0, 0, 0), collision), 1.0);

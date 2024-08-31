@@ -84,10 +84,3 @@ function renderInit(title)
 
     return window
 end
-
-function computeViewScale(window)
-    s = GLFW.GetWindowSize(window)
-
-    Z = max(s[1], s[2])
-    viewScale = [Z / s[1], Z / s[2]]
-end
