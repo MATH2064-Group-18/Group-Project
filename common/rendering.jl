@@ -4,9 +4,8 @@ using GLFW, ModernGL
 const ShaderPath = joinpath((@__DIR__), "shaders")
 
 function createShader(vertPath, fragPath)
-    ###### FIX THIS ##########
-    fragSource = "#version 460 core\n"
-    vertSource = "#version 460 core\n"
+    fragSource = "#version 330 core\n"
+    vertSource = "#version 330 core\n"
 
     open(vertPath) do io
         vertSource = vertSource * read(io, String)
@@ -23,7 +22,6 @@ function createShader(vertPath, fragPath)
     infoLog = Vector{UInt8}(undef, 512)
 
     vert = glCreateShader(GL_VERTEX_SHADER)
-    #vert_cstr = Ref(codeunits(vertSource)[:], 1)
     vert_cstr = Vector{Cchar}(undef, 0)
     for c in vertSource
         push!(vert_cstr, Cchar(c))
@@ -42,7 +40,6 @@ function createShader(vertPath, fragPath)
     end
 
     frag = glCreateShader(GL_FRAGMENT_SHADER)
-    #frag_cstr = map(Cchar, codeunits(fragSource)) |> collect
     frag_cstr = Vector{Cchar}(undef, 0)
     for c in fragSource
         push!(frag_cstr, Cchar(c))
@@ -72,8 +69,8 @@ end
 function renderInit(title)
     GLFW.Init()
     GLFW.WindowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_CORE_PROFILE)
-    GLFW.WindowHint(GLFW.CONTEXT_VERSION_MAJOR, 4)#########################################
-    GLFW.WindowHint(GLFW.CONTEXT_VERSION_MINOR, 6)#########################################
+    GLFW.WindowHint(GLFW.CONTEXT_VERSION_MAJOR, 3)
+    GLFW.WindowHint(GLFW.CONTEXT_VERSION_MINOR, 3)
 
     width = 1200
     height = 1200
