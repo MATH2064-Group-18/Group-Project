@@ -65,6 +65,7 @@ end
 
 function gradeResidual(g_norm, res_norm, newLine=true)
     
+    # as a (rough) rule of thumb, this seems to work
     if res_norm < 0.2g_norm
         printstyled("Good", color=:light_green)
     elseif res_norm < 0.7g_norm
