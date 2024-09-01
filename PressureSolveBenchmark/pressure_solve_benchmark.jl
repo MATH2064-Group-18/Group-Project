@@ -1,57 +1,14 @@
-using Swirl, BenchmarkTools
+using Swirl, BenchmarkTools, LinearAlgebra
+
+include("../common/benchmark_utils.jl")
 
 const Nx = 512
 const Ny = 512
 
 const MaxSolveIterations = 100
 
-"""
-    divergence!(v_div, v, collision, dx)
-
-Compute divergence while enforcing free-slip boundary condition.
-"""
-function divergence!(v_div, v, collision, dx)
-    @assert length(dx) == size(v, 1)
-    s0 = length(dx)
-
-    for i in eachindex(collision)
-        if collision[i] > 0
-            for (j, s) in enumerate(strides(collision))
-                b1 = collision[i - s] > 0 ? v[j + s0*(i - s-1)] : 2 * v[j + s0*(i - s - 1)] - v[j + s0 * (i-1)]
-                b2 = collision[i + s] > 0 ? v[j + s0*(i + s-1)] : 2 * v[j + s0*(i + s - 1)] - v[j + s0 * (i-1)]
-                v_div[i] += (b2 - b1) * 0.5 / dx[j]
-            end
-        end
-    end
-    
-    return v_div
-end
-
-function jacobi_bench(fluid, v_div, maxIterations, ϵ=0)
-    f = similar(fluid.p)
-    f_old = similar(f)
-    copy!(f, fluid.p)
-    Swirl.PressureSolve.jacobi!(f, f_old, v_div, fluid.collision, fluid.dx, maxIterations)
-end
-
-function gaussSeidel_bench(fluid, v_div, maxIterations, ϵ=0)
-    f = similar(fluid.p)
-    copy!(f, fluid.p)
-    Swirl.PressureSolve.gaussSeidel!(f, v_div, fluid.collision, fluid.dx, maxIterations)
-end
-
-function conjugateGradient_bench(fluid, v_div, maxIterations, ϵ=0)
-    f = similar(fluid.p)
-    copy!(f, fluid.p)
-    Swirl.PressureSolve.conjugateGradient!(f, v_div, fluid.collision, fluid.dx, maxIterations, ϵ)
-end
-
-function preconditionedConjugateGradient_bench(fluid, v_div, maxIterations, ϵ=0)
-    f = similar(fluid.p)
-    copy!(f, fluid.p)
-    Swirl.PressureSolve.preconditionedConjugateGradient!(f, v_div, fluid.collision, fluid.dx, maxIterations, ϵ)
-end
-
+# Uncomment if wanting to run single-threaded. (must also run with --threads not set to larger than 1)
+#BLAS.set_num_threads(1)
 
 fluid = let
     T = Float64
@@ -97,14 +54,20 @@ divergence!(v_div, fluid.vel, fluid.collision, fluid.dx)
 #==================== BENCHMARK ======================#
 
 
-printstyled("\n\nPRESSURE SOLVE BENCHMARK\n\n\n", bold=true, color=:light_magenta)
+printstyled("\n\nPRESSURE SOLVE BENCHMARK\n\n", bold=true, color=:light_magenta)
+
+println("Pressure solve run with fixed $(MaxSolveIterations) iterations on $(Nx) × $(Ny) grid.")
+v_div_norm = norm(v_div)
+println("norm(∇⋅v) = $(v_div_norm)\n\n")
 
 
 # Gauss-Seidel Benchmark
 
 printstyled("Gauss-Seidel Method:\n\n", bold=true, color=:light_yellow)
 b1 = @benchmark gaussSeidel_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
-println("Residual norm: $(gaussSeidel_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
+res_norm_gs = gaussSeidel_bench(fluid, v_div, MaxSolveIterations).residual_norm
+gradeResidual(v_div_norm, res_norm_gs)
+println("Residual norm: $(res_norm_gs)")
 show(stdout, MIME("text/plain"), b1)
 println("\n\n")
 
@@ -113,7 +76,9 @@ println("\n\n")
 
 printstyled("Jacobi Method:\n\n", bold=true, color=:light_yellow)
 b2 = @benchmark jacobi_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
-println("Residual norm: $(jacobi_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
+res_norm_j = jacobi_bench(fluid, v_div, MaxSolveIterations).residual_norm
+gradeResidual(v_div_norm, res_norm_j)
+println("Residual norm: $(res_norm_j)")
 show(stdout, MIME("text/plain"), b2)
 println("\n\n")
 
@@ -121,12 +86,16 @@ println("\n\n")
 
 printstyled("Conjugate Gradient Method:\n\n", bold=true, color=:light_yellow)
 b3 = @benchmark conjugateGradient_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
-println("Residual norm: $(conjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
+res_norm_cg = conjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm
+gradeResidual(v_div_norm, res_norm_cg)
+println("Residual norm: $(res_norm_cg)")
 show(stdout, MIME("text/plain"), b3)
 println("\n\n")
 
 printstyled("Preconditioned Conjugate Gradient Method:\n\n", bold=true, color=:light_yellow)
-b4 = @benchmark preconditionedConjugateGradient_bench($(fluid), v_div, MaxSolveIterations) seconds=20
-println("Residual norm: $(preconditionedConjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm)")
+b4 = @benchmark preconditionedConjugateGradient_bench($(fluid), $(v_div), MaxSolveIterations) seconds=20
+res_norm_pcg = preconditionedConjugateGradient_bench(fluid, v_div, MaxSolveIterations).residual_norm
+gradeResidual(v_div_norm, res_norm_pcg)
+println("Residual norm: $(res_norm_pcg)")
 show(stdout, MIME("text/plain"), b4)
 println("\n")
