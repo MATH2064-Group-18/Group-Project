@@ -11,6 +11,7 @@ function divergence!(v_div, v, collision, dx)
     s0 = length(dx)
 
     for i in eachindex(collision)
+        v_div[i] = 0
         if collision[i] > 0
             for (j, s) in enumerate(strides(collision))
                 b1 = collision[i - s] > 0 ? v[j + s0*(i - s-1)] : 2 * v[j + s0*(i - s - 1)] - v[j + s0 * (i-1)]
