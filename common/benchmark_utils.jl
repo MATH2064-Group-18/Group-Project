@@ -1,5 +1,4 @@
 using Swirl, LinearAlgebra
-using Swirl, Plots
 
 """
     divergence!(v_div, v, collision, dx)
