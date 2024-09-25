@@ -45,7 +45,6 @@ function main()
         Swirl.Fluid(Dx, v, coll, p, d)
     end
     window = renderInit(Demo_Title)
-    #framecallback
 
     geos = Vector{Geometry}(undef, 0)
     push!(
@@ -247,7 +246,6 @@ function main()
         end
 
         Swirl.timestepUpdate!(fluid, dt)
-        # source
 
 
         for i in eachindex(fluid.collision)
