@@ -93,8 +93,6 @@ function main()
         )
     )
 
-
-
     planeData = collect(transpose([
         -1.0f0 -1.0f0 0.0f0 0.0f0
         1.0f0 -1.0f0  1.0f0 0.0f0
@@ -198,13 +196,6 @@ function main()
 
 
     sourceAmount = 0.2
-
-
-
-
-
-
-
 
 
     shouldRun = true
@@ -326,5 +317,6 @@ function rasterise!(fluid, geo, sval)
         end
     end
 end
+
 
 main()
