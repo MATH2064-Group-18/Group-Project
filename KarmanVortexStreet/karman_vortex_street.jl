@@ -10,6 +10,7 @@ const Nx = 400
 const Ny = 200
 const N = Nx*Ny
 const L = Float64[20, 10]
+const MaxSolveIterations=50
 
 const CirclePos = Float64[3,5]
 
@@ -53,6 +54,8 @@ function main()
             
         Swirl.Fluid(Dx, v, coll, p, d)
     end
+
+    solver = Swirl.JacobiSolver{eltype(fluid.p), ndims(fluid.p)}(fluid.dx, size(fluid.p), MaxSolveIterations)
 
     window = renderInit("Karman Vortex Street")
 
@@ -237,7 +240,7 @@ function main()
         if !isPaused
 
             
-            Swirl.timestepUpdate!(fluid, dt)
+            Swirl.timestepUpdate!(solver, fluid, dt)
             for I in CartesianIndices(fluid.collision)
                 x = (I[1] - 1) * fluid.dx[1]
                 y = (I[2] - 1) * fluid.dx[2]

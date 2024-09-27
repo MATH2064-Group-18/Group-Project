@@ -6,3 +6,6 @@ ModernGL = "66fc600b-dfda-50eb-8b99-91cfa97b1301"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Swirl = "14bce6eb-cb74-4a2f-816d-8c3dfb85de2f"
+
+[compat]
+Swirl = "0.2.0"

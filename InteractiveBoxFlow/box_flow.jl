@@ -6,17 +6,34 @@ using LinearAlgebra
 include("../common/rendering.jl")
 include("../common/geometry.jl")
 
+## Feel free to mess aroun with these ##
+
 const Field_T = Float64
 
 const Nx = 256
 const Ny = 256
+
+# This is a fairly large number of iterations
+const MaxSolveIterations = 80
+
+const Move_Speed = Field_T(2)
+
+const Demo_Title = "Box Flow"
+
+
+# can change to GL_NEAREST for non-interpolated results.
+const Fluid_Texture_Interpolation = GL_LINEAR 
+
+const L = Field_T[10, 10]
+
+## Don't touch ##
+
 const N = Nx*Ny
 const Ns = [Nx, Ny]
 
-const L = Field_T[10, 10]
 const H = @. L / 2
 
-const Demo_Title = "Box Flow"
+######
 
 function main()
 
@@ -44,6 +61,9 @@ function main()
         
         Swirl.Fluid(Dx, v, coll, p, d)
     end
+
+    solver = Swirl.JacobiSolver{eltype(fluid.p), ndims(fluid.p)}(fluid.dx, size(fluid.p), MaxSolveIterations)
+
     window = renderInit(Demo_Title)
 
     geos = Vector{Geometry}(undef, 0)
@@ -60,7 +80,7 @@ function main()
         geos, 
         Geometry(
             Square(), @MMatrix(Field_T[1 0; 0 1]), 
-            MVector{2, Field_T}(-1.0, 0.0)+H, 
+            MVector{2, Field_T}(-2.0, 0.0)+H, 
             MVector{2, Field_T}(0, 0), 
             zero(Field_T), true, false
         )
@@ -69,7 +89,7 @@ function main()
         geos, 
         Geometry(
             Square(), @MMatrix(Field_T[1 0; 0 1]), 
-            MVector{2, Field_T}(2.0, 1.0)+H, 
+            MVector{2, Field_T}(1.0, 1.0)+H, 
             MVector{2, Field_T}(0, 0), 
             zero(Field_T), true, false
         )
@@ -77,8 +97,8 @@ function main()
     push!(
         geos, 
         Geometry(
-            Square(), @MMatrix(Field_T[1.2 0; 0 1.2]), 
-            MVector{2, Field_T}(-1.0, 0.0)+H, 
+            Square(), @MMatrix(Field_T[1.15 0; 0 1.15]), 
+            MVector{2, Field_T}(-2.0, 0.0)+H, 
             MVector{2, Field_T}(0, 0), 
             zero(Field_T), false, true
         )
@@ -86,8 +106,8 @@ function main()
     push!(
         geos, 
         Geometry(
-            Square(), @MMatrix(Field_T[1.2 0; 0 1.2]), 
-            MVector{2, Field_T}(2.0, 1.0)+H, 
+            Square(), @MMatrix(Field_T[1.15 0; 0 1.15]), 
+            MVector{2, Field_T}(1.0, 1.0)+H, 
             MVector{2, Field_T}(0, 0), 
             zero(Field_T), false, true
         )
@@ -160,8 +180,8 @@ function main()
     glBindTexture(GL_TEXTURE_2D, dp_tex)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Fluid_Texture_Interpolation)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Fluid_Texture_Interpolation)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, Nx, Ny, 0, GL_RGB, GL_FLOAT, Ref(dp_texData, 1))
 
     fluid_shader = createShader(joinpath(ShaderPath, "fluid.vert"), joinpath(ShaderPath, "fluid.frag"))
@@ -188,12 +208,15 @@ function main()
 
     frametimes_hist = fill(Float64(1/60), 32)
 
-    currentTime = time()
     fpsDisplayUpdateTime = 0.25
     fpsDisplayElapsed = 0
-
-    maximumTimestep = 1 / 30
-
+    
+    # will run sub-real-time instead of letting timestep larger than this
+    maximumTimestep = 1 / 30 
+    # to prevent division by 0
+    minimumTimeStep = 1e-9
+    currentTime = time() - maximumTimestep
+    
 
     sourceAmount = 0.2
 
@@ -206,7 +229,7 @@ function main()
         frameTime = currentTime - previousTime
         fpsDisplayElapsed += frameTime
 
-        dt = convert(Field_T, min(maximumTimestep, frameTime))
+        dt = convert(Field_T, max(min(maximumTimestep, frameTime), minimumTimeStep))
         
         for i in Iterators.reverse(Iterators.drop(eachindex(frametimes_hist), 1)|>collect)
             frametimes_hist[i] = frametimes_hist[i-1]
@@ -224,6 +247,24 @@ function main()
         if GLFW.GetKey(window, GLFW.KEY_ESCAPE) == GLFW.PRESS
             shouldRun = false
         end
+        
+        displacement = MVector{2, Field_T}(0, 0)
+
+        if GLFW.GetKey(window, GLFW.KEY_W) == GLFW.PRESS || GLFW.GetKey(window, GLFW.KEY_UP) == GLFW.PRESS
+            displacement += Move_Speed * dt * SA[0, 1]
+        end
+        if GLFW.GetKey(window, GLFW.KEY_S) || GLFW.GetKey(window, GLFW.KEY_DOWN) == GLFW.PRESS
+            displacement -= Move_Speed * dt * SA[0, 1]
+        end
+        if GLFW.GetKey(window, GLFW.KEY_A) == GLFW.PRESS || GLFW.GetKey(window, GLFW.KEY_LEFT) == GLFW.PRESS
+            displacement -= Move_Speed * dt * SA[1, 0]
+        end
+        if GLFW.GetKey(window, GLFW.KEY_D) == GLFW.PRESS || GLFW.GetKey(window, GLFW.KEY_RIGHT) == GLFW.PRESS
+            displacement += Move_Speed * dt * SA[1, 0]
+        end
+
+        geos[1].pos += displacement
+        geos[1].v = displacement ./ dt
 
         for I in CartesianIndices(fluid.p)
             fluid.collision[I] = 1
@@ -236,7 +277,7 @@ function main()
             rasterise!(fluid, g, sourceAmount * dt)
         end
 
-        Swirl.timestepUpdate!(fluid, dt)
+        Swirl.timestepUpdate!(solver, fluid, dt)
 
 
         for i in eachindex(fluid.collision)
@@ -307,6 +348,7 @@ function rasterise!(fluid, geo, sval)
         if hit
             if geo.isCollider
                 fluid.collision[I] = -1
+                fluid.density[I] = 0
                 @. fluid.vel[:, I] = geo.v + geo.ω * SA[r[2], -r[1]]
             end
             if geo.isSource

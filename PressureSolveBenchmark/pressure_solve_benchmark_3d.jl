@@ -1,4 +1,5 @@
-using Swirl, BenchmarkTools, LinearAlgebra
+using Swirl, BenchmarkTools, LinearAlgebra, Dates
+using InteractiveUtils # to print version info
 
 include("../common/benchmark_utils.jl")
 
@@ -53,12 +54,15 @@ divergence!(v_div, fluid.vel, fluid.collision, fluid.dx)
 #==================== BENCHMARK ======================#
 
 
+versioninfo()
 printstyled("\n\nPRESSURE SOLVE BENCHMARK 3D\n\n", bold=true, color=:light_magenta)
 
 println("Pressure solve run with fixed $(MaxSolveIterations) iterations on $(Nx) × $(Ny) × $(Nz) grid.")
 v_div_norm = norm(v_div)
-println("norm(∇⋅v) = $(v_div_norm)\n\n")
-
+println("norm(∇⋅v) = $(v_div_norm)\n")
+print("ETA: ")
+printstyled(Dates.format(Dates.now() + Minute(3), "H:MM  yyyy-mm-dd"), color=:light_green)
+println("\n\n")
 
 # Gauss-Seidel Benchmark
 
